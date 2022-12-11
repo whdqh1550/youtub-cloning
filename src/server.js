@@ -7,6 +7,11 @@ import videoRouter from "./routers/videoRouter";
 
 const app = express();
 const logger = morgan("dev");
+
+app.set("view engine", "pug"); // setting pug as engine for view
+app.set("views", process.cwd() + "/src/views"); // this is how to fix failed to look up view "home"
+// this needs to be done because process.cwd() is wetube not src/views file, you have to bring out the view files or set the views
+
 app.use(logger);
 
 const PORT = 4000;
