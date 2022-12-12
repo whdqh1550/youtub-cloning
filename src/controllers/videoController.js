@@ -1,4 +1,10 @@
-export const trending = (req, res) => res.render("home", { pageTitle: "Home" }); //this is giving title to top of the page
+const fakeUser = {
+  username: "Jongbo",
+  loggedIn: false,
+};
+
+export const trending = (req, res) =>
+  res.render("home", { pageTitle: "Home", fakeUser: fakeUser }); //this is giving title to top of the page
 export const search = (req, res) => res.send("search Videos");
 export const see = (req, res) => res.render("watch", { pageTitle: "watch" });
 export const remove = (req, res) => {
