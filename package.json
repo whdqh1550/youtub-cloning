@@ -8,7 +8,7 @@
     "url": "git+https://github.com/whdqh1550/youtub-cloning.git"
   },
   "scripts": {
-    "dev": "nodemon --exec babel-node src/server.js"
+    "dev": "nodemon --exec babel-node src/init.js"
   },
   "author": "Jongbo",
   "license": "MIT",
