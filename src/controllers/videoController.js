@@ -1,66 +1,66 @@
-const videos = [
-  {
-    title: "Hello",
-    rating: 5,
-    comment: 2,
-    createdAt: "2 minutes ago",
-    views: 59,
-    id: 1,
-  },
-  {
-    title: "Hello2",
-    rating: 5,
-    comment: 2,
-    createdAt: "2 minutes ago",
-    views: 59,
-    id: 2,
-  },
-  {
-    title: "Hello3",
-    rating: 5,
-    comment: 2,
-    createdAt: "2 minutes ago",
-    views: 59,
-    id: 3,
-  },
-];
+import Video from "../models/Video";
 
-export const trending = (req, res) => {
-  res.render("home", { pageTitle: "Home", videos }); //this is giving title to top of the page
+//Video.find({}, (error, videos) => {
+//return is inside here to make sure that render after search is done.
+//});
+export const home = async (req, res) => {
+  const videos = await Video.find({}); //await have to be used with async in the function, using await waits for db to answer
+  console.log(videos);
+  return res.render("home", { pageTitle: "Home", videos: videos }); //this is giving title to top of the page
 };
 
-export const watch = (req, res) => {
+export const watch = async (req, res) => {
   const { id } = req.params;
-  const video = videos[id - 1];
-  console.log(id);
-  return res.render("watch", { pageTitle: `Watching: ${video.title}`, video });
+  const video = await Video.findById(id);
+  console.log(video);
+  return res.render("watch", { pageTitle: video.title, video: video });
 };
 
-export const getEdit = (req, res) => {
+export const getEdit = async (req, res) => {
   const { id } = req.params;
-  const video = videos[id - 1];
-  res.render("edit", { pageTitle: `Editing: ${video.title}`, video });
+  const video = await Video.findById(id);
+
+  if (!video) {
+    return res.render("404", { pageTitle: "Video not found." });
+  }
+
+  return res.render("edit", { pageTitle: `Editing:${video.title}`, video });
 };
-export const postEdit = (req, res) => {
+export const postEdit = async (req, res) => {
   const { id } = req.params;
-  const { title } = req.body;
-  videos[id - 1].title = title;
+  const video = await Video.findById(id);
+  const { title, description, hashtags } = req.body;
+  if (!video) {
+    return res.render("404", { pageTitle: "Video not found." });
+  }
+  video.title = title;
+  video.description = description;
+  video.hashtags = hashtags
+    .split(",")
+    .map((word) => (word.startsWith(`#`) ? word : `#${word}`));
+  await video.save();
 
   return res.redirect(`/videos/${id}`);
 };
 export const getUpload = (req, res) => {
   return res.render("upload", { pageTitle: `Upload Video` });
 };
-export const postUpload = (req, res) => {
-  console.log(req.body);
-  const newVideo = {
-    title: req.body.title,
-    rating: 0,
-    comment: 0,
-    createdAt: "just now",
-    views: 0,
-    id: videos.length + 1,
-  };
-  videos.push(newVideo);
-  return res.redirect("/");
+export const postUpload = async (req, res) => {
+  const { title, description, hashtags } = req.body;
+
+  try {
+    await Video.create({
+      title,
+      description,
+      hashtags: hashtags.split(",").map((word) => `#${word}`),
+    });
+    // this is way to save vid on db
+    // need to put await cause it video.save() returns promise which mean it has to wait to be save
+    return res.redirect("/");
+  } catch (error) {
+    return (
+      res.render("upload"),
+      { pageTitle: "Upload Video", errorMessage: error._message }
+    );
+  }
 };
