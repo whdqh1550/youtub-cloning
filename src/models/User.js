@@ -3,16 +3,16 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
+  avatarUrl: { type: String },
+  socialOnly: { type: Boolean, default: false },
+  username: { type: String, unique: true }, //required: true,
+  password: { type: String, unique: true }, //required: false,
+  name: { type: String }, //required: true
   location: String,
 });
 
 userSchema.pre("save", async function () {
-  console.log("users password:", this.password);
   this.password = await bcrypt.hash(this.password, 5);
-  console.log("Hashed password", this.password);
 }); // hashing middleware
 
 const User = mongoose.model(`User`, userSchema);

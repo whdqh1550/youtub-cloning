@@ -28,7 +28,7 @@ app.use(
     resave: false,
     saveUninitialized: false, //if the modificaion is not initialized it does not give cookies, in this case we only have to logged in person have modifed session
     cookie: {
-      maxAge: 20000, //this is how to set expiration duration in miliseconds
+      maxAge: 2000000, //this is how to set expiration duration in miliseconds
     },
     store: MongoStore.create({ mongoUrl: process.env.DB_URL }), //this is to save sessions on db
   })
