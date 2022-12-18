@@ -2,9 +2,12 @@
 import express from "express"; // this only can be done because we have babel if we dont have should be const express = require("express");
 
 import morgan from "morgan";
-import globalRouter from "./routers/globalRouter";
+import session from "express-session";
+import MongoStore from "connect-mongo";
+import rootRouter from "./routers/rootRouter";
 import userRouter from "./routers/userRouter";
 import videoRouter from "./routers/videoRouter";
+import { localsMiddleware } from "./middlewares";
 
 const app = express();
 const logger = morgan("dev");
@@ -18,7 +21,21 @@ app.use(logger);
 
 //this is how to create router
 
-app.use("/", globalRouter);
+app.use(
+  //this is session middleware this is to make cookie
+  session({
+    secret: process.env.COOKIE_SECRET, //process.env only works when you install dotevn in npm
+    resave: false,
+    saveUninitialized: false, //if the modificaion is not initialized it does not give cookies, in this case we only have to logged in person have modifed session
+    cookie: {
+      maxAge: 20000, //this is how to set expiration duration in miliseconds
+    },
+    store: MongoStore.create({ mongoUrl: process.env.DB_URL }), //this is to save sessions on db
+  })
+);
+
+app.use(localsMiddleware); //this is saving logged in info into session`s cookie
+app.use("/", rootRouter);
 app.use("/videos", videoRouter);
 app.use("/user", userRouter);
 
