@@ -1,6 +1,7 @@
 import User from "../models/User";
 import fetch from "node-fetch"; // in order to user fetcn gotta npm i node-fetch@2.6.1 or can use cross-fetch
 import bcrypt from "bcrypt";
+import Video from "../models/Video";
 
 export const getJoin = (req, res) => res.render("join", { pageTitle: "Join" });
 export const postJoin = async (req, res) => {
@@ -145,6 +146,100 @@ export const logout = (req, res) => {
   req.session.destroy();
   return res.redirect("/");
 };
-export const edit = (req, res) => res.send("Edit");
+export const getEdit = (req, res) => {
+  return res.render("edit-profile", { pageTitle: "Edit Profile" });
+};
+export const postEdit = async (req, res) => {
+  const {
+    session: {
+      user: { _id, avatarUrl },
+    },
+    body: { name, email, username, location },
+    file,
+  } = req; // this line is same as const id = req.session.user.id//const { name, email, username, location } = req.body;
+  console.log(file);
+  if (req.session.user.email !== email) {
+    const emailExist = Boolean(await User.findOne({ email }));
+    if (emailExist) {
+      return res.render("edit-profile", {
+        pageTitle: "Edit",
+        errorMessage: "Email alrady exsit",
+      });
+    }
+  }
+  if (req.session.user.username !== username) {
+    const emailExist = Boolean(await User.findOne({ username }));
+    if (emailExist) {
+      return res.render("edit-profile", {
+        pageTitle: "Edit",
+        errorMessage: "username alrady exsit",
+      });
+    }
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    _id,
+    {
+      avatarUrl: file ? file.path : avatarUrl,
+      name: name,
+      email: email,
+      username: username,
+      location: location,
+    },
+    { new: true } //this one has to be in by default it is false, if it is false it doesnt put updated version to variable, so it has to be new to store new information
+  );
+  req.session.user = updatedUser;
+  //  ...req.session.user, // this is putting previous information into req.session.user thats not going to be infomred by contents underneath
+
+  return res.redirect("/user/edit");
+};
+export const getChangePassword = (req, res) => {
+  if (req.session.user.socialOnly === true) {
+    res.redirect("/");
+  }
+  return res.render("change-password", { pageTitle: "Change Password" });
+};
+export const postChangePassword = async (req, res) => {
+  //we will change password
+  const {
+    session: {
+      user: { _id, password },
+    },
+    body: { oldPassword, newPassword, confirmationPassword },
+  } = req;
+  const ok = await bcrypt.compare(oldPassword, password);
+  if (!ok) {
+    return res.status(400).render("change-password", {
+      pageTitle: "Change Password",
+      errorMessage: "the current password does not match",
+    });
+  }
+  if (newPassword !== confirmationPassword) {
+    return res.status(400).render("change-password", {
+      pageTitle: "Change Password",
+      errorMessage: "the new passwords does not match",
+    });
+  }
+  // in order to trigger pre("save") middleware in User schema we have to use write down the whole schema again like User.create()or user.save()
+  const user = await User.findById({ _id });
+  user.password = newPassword;
+  console.log(user.password);
+  await user.save();
+  req.session.user.password = user.password; // this is updating the session user obj password bc we have 2 storage which is session and db.
+  console.log(user.password);
+  return res.redirect("/");
+};
 export const remove = (req, res) => res.send("remove");
-export const see = (req, res) => res.send("see user");
+export const see = async (req, res) => {
+  const { id } = req.params;
+  const user = await User.findById(id).populate("videos"); //transferring all obj id in videos array to video obj
+  console.log(user);
+  if (!user) {
+    res.status(404).render("404");
+  }
+  //const videos = await Video.find({ owner: user._id }); //this is finding all the videos that has same owner _id
+  return res.render("profile", {
+    pageTitle: `${user.name} Profile`,
+    user,
+  });
+};

@@ -1,3 +1,4 @@
+import User from "../models/User";
 import Video from "../models/Video";
 
 //Video.find({}, (error, videos) => {
@@ -11,7 +12,8 @@ export const home = async (req, res) => {
 
 export const watch = async (req, res) => {
   const { id } = req.params;
-  const video = await Video.findById(id);
+  const video = await Video.findById(id).populate("owner"); //since we have ref as User if you populate it will find User info with the id in owner Obj
+  //populate find coordinate owner id in the schen owner obj and bring the user info into video shcem owner section
 
   return res.render("watch", { pageTitle: video.title, video: video });
 };
@@ -44,16 +46,24 @@ export const getUpload = (req, res) => {
   return res.render("upload", { pageTitle: `Upload Video` });
 };
 export const postUpload = async (req, res) => {
+  const file = req.file;
+  const { user: _id } = req.session;
   const { title, description, hashtags } = req.body;
 
   try {
-    await Video.create({
+    const newVideo = await Video.create({
       title,
       description,
+      fileUrl: file.path,
       hashtags: Video.formatHashtags(hashtags),
+      owner: _id, // since it has reference in schema we can only send _id of User who owns it
     });
     // this is way to save vid on db
     // need to put await cause it video.save() returns promise which mean it has to wait to be save
+
+    const user = await User.findById(_id);
+    user.videos.push(newVideo._id);
+    user.save(); //up three lines are for adding video id to owners videos array in schema
     return res.redirect("/");
   } catch (error) {
     return (
