@@ -13,7 +13,10 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre("save", async function () {
-  this.password = await bcrypt.hash(this.password, 5);
+  if (this.isModified("password")) {
+    //this is to prevent hashing the password again after push a video to owner and save thea array
+    this.password = await bcrypt.hash(this.password, 5);
+  }
 }); // hashing middleware
 
 const User = mongoose.model(`User`, userSchema);

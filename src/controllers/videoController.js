@@ -21,9 +21,15 @@ export const watch = async (req, res) => {
 export const getEdit = async (req, res) => {
   const { id } = req.params;
   const video = await Video.findById(id);
-
+  const {
+    user: { _id },
+  } = req.session;
   if (!video) {
     return res.status(404).render("404", { pageTitle: "Video not found." });
+  }
+  if (String(video.owner) !== String(_id)) {
+    //this is to check the person is the owner of the video
+    return res.status(403).redirect("/");
   }
 
   return res.render("edit", { pageTitle: `Editing:${video.title}`, video });
