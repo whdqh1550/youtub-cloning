@@ -37,6 +37,7 @@ app.use(
 app.use(localsMiddleware); //this is saving logged in info into session`s cookie
 app.use("/", rootRouter);
 app.use("/uploads", express.static("uploads")); // this is to expose uploads file to browser so it can look at uploads folder.
+app.use("/assets", express.static("assets"));
 app.use("/videos", videoRouter);
 app.use("/user", userRouter);
 

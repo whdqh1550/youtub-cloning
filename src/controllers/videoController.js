@@ -5,7 +5,9 @@ import Video from "../models/Video";
 //return is inside here to make sure that render after search is done.
 //});
 export const home = async (req, res) => {
-  const videos = await Video.find({}).sort({ createdAt: "desc" }); //await have to be used with async in the function, using await waits for db to answer
+  const videos = await Video.find({})
+    .sort({ createdAt: "desc" })
+    .populate("owner"); //await have to be used with async in the function, using await waits for db to answer
 
   return res.render("home", { pageTitle: "Home", videos: videos }); //this is giving title to top of the page
 };
@@ -24,6 +26,7 @@ export const getEdit = async (req, res) => {
   const {
     user: { _id },
   } = req.session;
+
   if (!video) {
     return res.status(404).render("404", { pageTitle: "Video not found." });
   }
@@ -37,6 +40,9 @@ export const getEdit = async (req, res) => {
 export const postEdit = async (req, res) => {
   const { id } = req.params;
   const video = await Video.exists({ _id: id });
+  const {
+    user: { _id },
+  } = req.session;
   const { title, description, hashtags } = req.body;
   if (!video) {
     return res.status(404).render("404", { pageTitle: "Video not found." });
@@ -46,6 +52,10 @@ export const postEdit = async (req, res) => {
     description,
     hashtags: Video.formatHashtags(hashtags),
   });
+  if (String(video.owner) !== String(_id)) {
+    //this is to check the person is the owner of the video
+    return res.status(403).redirect("/");
+  }
   return res.redirect(`/videos/${id}`);
 };
 export const getUpload = (req, res) => {
@@ -80,6 +90,14 @@ export const postUpload = async (req, res) => {
 };
 export const deleteVideo = async (req, res) => {
   const { id } = req.params;
+  const video = await Video.findById(id);
+  const {
+    user: { _id },
+  } = req.session;
+  if (String(video.owner) !== String(_id)) {
+    //this is to check the person is the owner of the video
+    return res.status(403).redirect("/");
+  }
   await Video.findByIdAndDelete(id);
   return res.redirect("/");
 };

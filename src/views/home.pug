@@ -2,11 +2,28 @@ extends base.pug
 include mixins/video
 
 block content
-    h2 welcome you will be seeing trending video
-    
-    each video in videos 
-        +video(video)
-    
+    div.video-grid
+        each video in videos 
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+            +video(video)
+        else 
+            span.empty_message No videos found   
 
 
     
